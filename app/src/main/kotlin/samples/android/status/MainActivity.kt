@@ -76,6 +76,16 @@ internal class MainActivity : ComponentActivity() {
         cm.allNetworks.forEach { network ->
             onNetwork(cm = cm, network = network, dst = networks)
         }
+        val ei = mutableMapOf<String, String>()
+        am.getHistoricalProcessExitReasons(context.packageName, 0, 8).maxByOrNull {
+            it.timestamp
+        }?.also {
+            ei["ei:timestamp"] = it.timestamp.toString()
+            ei["ei:reason"] = it.reason.toString()
+            ei["ei:status"] = it.status.toString()
+            ei["ei:pss"] = it.pss.toString()
+            ei["ei:rss"] = it.rss.toString()
+        }
         tv.text = """
             totalMem: ${ami.totalMem} (${ami.totalMem.toDouble().div(1024).div(1024).toLong()}mb)
             availMem: ${ami.availMem} (${ami.availMem.toDouble().div(1024).div(1024).toLong()}mb)
@@ -104,7 +114,9 @@ internal class MainActivity : ComponentActivity() {
             VERSION_NAME: ${BuildConfig.VERSION_NAME}
             VERSION_CODE: ${BuildConfig.VERSION_CODE}
             ---
-            networks: ${networks}
+            networks: $networks
+            ---
+            ei: $ei
         """.trimIndent()
     }
 
