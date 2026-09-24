@@ -3,6 +3,7 @@ package samples.android.status
 import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.os.Debug
 import android.os.Environment
@@ -59,6 +60,16 @@ internal class MainActivity : ComponentActivity() {
             booted: ${now.minus(elapsed).inWholeMilliseconds} (${Date(now.minus(elapsed).inWholeMilliseconds)})
             installed: ${pi.firstInstallTime} (${Date(pi.firstInstallTime)})
             updated: ${pi.lastUpdateTime} (${Date(pi.lastUpdateTime)})
+            ---
+            build.version.release: ${Build.VERSION.RELEASE}
+            build.version.sdk: ${Build.VERSION.SDK_INT}
+            build.display: ${Build.DISPLAY}
+            build.id: ${Build.ID}
+            build.fingerprint: ${Build.FINGERPRINT}
+            ---
+            BUILD_TYPE: ${BuildConfig.BUILD_TYPE}
+            VERSION_NAME: ${BuildConfig.VERSION_NAME}
+            VERSION_CODE: ${BuildConfig.VERSION_CODE}
         """.trimIndent()
     }
 
