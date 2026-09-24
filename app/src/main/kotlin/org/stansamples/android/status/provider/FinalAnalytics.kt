@@ -10,12 +10,14 @@ import org.json.JSONObject
 import org.stansamples.android.status.BuildConfig
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -76,6 +78,18 @@ internal class FinalAnalytics(
                         .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                         ?: error("No docs!")
                     val fileName = "Analytics_${fileFormat.format(date)}_${launched.inWholeMilliseconds}.jsonl"
+                    for (file in docs.resolve(BuildConfig.APPLICATION_ID).resolve("Analytics").listFiles().orEmpty()) {
+                        if (!file.exists()) continue
+                        if (!file.isDirectory) continue
+                        val then = try {
+                            fileFormat.parse(file.name)
+                        } catch (_: Throwable) {
+                            continue
+                        }.time.milliseconds
+                        if (date.time.milliseconds.minus(then) > 14.days) {
+                            file.deleteRecursively()
+                        }
+                    }
                     val dir = docs
                         .resolve(BuildConfig.APPLICATION_ID)
                         .resolve("Analytics")
