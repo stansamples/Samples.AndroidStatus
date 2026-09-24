@@ -1,4 +1,4 @@
-package samples.android.status
+package org.stansamples.android.status
 
 import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
@@ -110,6 +110,7 @@ internal class MainActivity : ComponentActivity() {
             build.id: ${Build.ID}
             build.fingerprint: ${Build.FINGERPRINT}
             ---
+            APPLICATION_ID: ${BuildConfig.APPLICATION_ID}
             BUILD_TYPE: ${BuildConfig.BUILD_TYPE}
             VERSION_NAME: ${BuildConfig.VERSION_NAME}
             VERSION_CODE: ${BuildConfig.VERSION_CODE}

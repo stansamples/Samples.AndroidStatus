@@ -1,4 +1,4 @@
-package samples.android.status.provider
+package org.stansamples.android.status.provider
 
 import kotlin.coroutines.CoroutineContext
 

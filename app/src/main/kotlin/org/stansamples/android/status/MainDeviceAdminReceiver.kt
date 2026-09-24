@@ -1,4 +1,4 @@
-package samples.android.status
+package org.stansamples.android.status
 
 import android.app.admin.DeviceAdminReceiver
 import android.content.Context

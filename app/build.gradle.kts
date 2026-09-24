@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "samples.android.status"
+    namespace = "org.stansamples.android.status"
     compileSdk = 36
 
     defaultConfig {

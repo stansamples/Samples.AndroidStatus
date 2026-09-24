@@ -1,14 +1,14 @@
-package samples.android.status
+package org.stansamples.android.status
 
 import android.app.Application
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
-import samples.android.status.provider.Admins
-import samples.android.status.provider.Contexts
-import samples.android.status.provider.FinalAdmins
-import samples.android.status.provider.FinalLoggers
-import samples.android.status.provider.Loggers
-import samples.android.status.provider.Providers
+import org.stansamples.android.status.provider.Admins
+import org.stansamples.android.status.provider.Contexts
+import org.stansamples.android.status.provider.FinalAdmins
+import org.stansamples.android.status.provider.FinalLoggers
+import org.stansamples.android.status.provider.Loggers
+import org.stansamples.android.status.provider.Providers
 
 internal class App : Application() {
     override fun onCreate() {
