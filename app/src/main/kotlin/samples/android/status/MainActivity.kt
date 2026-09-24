@@ -3,6 +3,9 @@ package samples.android.status
 import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Debug
@@ -27,6 +30,30 @@ internal class MainActivity : ComponentActivity() {
     private val providers = App.providers
     private val logger = providers.loggers.create("[Main]")
 
+    private fun onNetwork(cm: ConnectivityManager, network: Network?, dst: MutableMap<String, String>) {
+        if (network == null) return
+        val nc = cm.getNetworkCapabilities(network) ?: return
+        val lp = cm.getLinkProperties(network) ?: return
+        val transport = when {
+            nc.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "eth"
+            nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "wifi"
+            nc.hasTransport(NetworkCapabilities.TRANSPORT_USB) -> "usb"
+            nc.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) -> "bt"
+            nc.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "cellular"
+            else -> return
+        }
+        val key = lp.interfaceName
+        if (key.isNullOrBlank()) return
+        if (dst.containsKey("$key:transport")) return
+        if (cm.activeNetwork == network) {
+            dst["$key:default"] = "true"
+        }
+        dst["$key:transport"] = transport
+        dst["$key:internet"] = nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).toString()
+        dst["$key:validated"] = nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED).toString()
+        dst["$key:linkAddresses"] = lp.linkAddresses.toList().toString()
+    }
+
     private fun updateStatus(context: Context, tv: TextView) {
         val am = context.getSystemService(ActivityManager::class.java)
         val ami = ActivityManager.MemoryInfo()
@@ -43,6 +70,11 @@ internal class MainActivity : ComponentActivity() {
         val elapsed = SystemClock.elapsedRealtime().milliseconds
         val now = System.currentTimeMillis().milliseconds
         val pi = packageManager.getPackageInfo(context.packageName, 0)
+        val cm = context.getSystemService(ConnectivityManager::class.java)
+        val networks = mutableMapOf<String, String>()
+        cm.allNetworks.forEach { network ->
+            onNetwork(cm = cm, network = network, dst = networks)
+        }
         tv.text = """
             totalMem: ${ami.totalMem} (${ami.totalMem.toDouble().div(1024).div(1024).toLong()}mb)
             availMem: ${ami.availMem} (${ami.availMem.toDouble().div(1024).div(1024).toLong()}mb)
@@ -70,6 +102,8 @@ internal class MainActivity : ComponentActivity() {
             BUILD_TYPE: ${BuildConfig.BUILD_TYPE}
             VERSION_NAME: ${BuildConfig.VERSION_NAME}
             VERSION_CODE: ${BuildConfig.VERSION_CODE}
+            ---
+            networks: ${networks}
         """.trimIndent()
     }
 
