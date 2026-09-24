@@ -1,6 +1,7 @@
 package org.stansamples.android.status.provider
 
 import android.os.Environment
+import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,13 +16,12 @@ import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
-import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal class FinalAnalytics(
     private val coroutineScope: CoroutineScope,
-    private val default: CoroutineContext,
+    private val contexts: Contexts,
     private val snapshots: Snapshots,
     loggers: Loggers,
 ) : Analytics {
@@ -34,18 +34,18 @@ internal class FinalAnalytics(
     private val indices = AtomicLong(launched.inWholeMilliseconds)
 
     init {
-        var timeStart = System.currentTimeMillis().milliseconds
+        var timeStart = SystemClock.elapsedRealtime().milliseconds
         val timeMax = 16.seconds
         coroutineScope.launch {
-            withContext(default) {
+            withContext(contexts.default) {
                 while (true) {
-                    val timeNow = System.currentTimeMillis().milliseconds
+                    val timeNow = SystemClock.elapsedRealtime().milliseconds
                     if (timeNow.minus(timeStart) < timeMax) {
                         delay(1.seconds)
                         continue
                     }
                     report(key = "periodic status", payload = snapshots.getSnapshot())
-                    timeStart = System.currentTimeMillis().milliseconds
+                    timeStart = SystemClock.elapsedRealtime().milliseconds
                 }
             }
         }
@@ -68,7 +68,7 @@ internal class FinalAnalytics(
 
     override fun report(key: String, payload: Map<String, String>) {
         coroutineScope.launch {
-            withContext(default) {
+            withContext(contexts.io) {
                 locks.writeLock().withLock {
                     logger.debug("event: $key")
                     val date = Date()

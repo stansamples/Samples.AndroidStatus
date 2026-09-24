@@ -24,6 +24,7 @@ internal class App : Application() {
         val contexts = Contexts(
             main = Dispatchers.Main,
             default = Dispatchers.Default,
+            io = Dispatchers.IO,
         )
         val admins: Admins = FinalAdmins(
             context = context,
@@ -34,7 +35,7 @@ internal class App : Application() {
         val snapshots: Snapshots = FinalSnapshots(context = context)
         val analytics: Analytics = FinalAnalytics(
             coroutineScope = coroutineScope,
-            default = contexts.default,
+            contexts = contexts,
             loggers = loggers,
             snapshots = snapshots,
         )

@@ -15,6 +15,8 @@ import android.os.storage.StorageManager
 import org.stansamples.android.status.BuildConfig
 
 internal class FinalSnapshots(private val context: Context) : Snapshots {
+    private var lastExits: String? = null
+
     override fun getSnapshot(): Map<String, String> {
         val snapshot = mutableMapOf<String, String>()
         //
@@ -32,7 +34,7 @@ internal class FinalSnapshots(private val context: Context) : Snapshots {
             context.packageName,
             Process.myUserHandle(),
         )
-        snapshot["os:fs"] = "${statFs.totalBytes}/${statFs.freeBytes}/${ss.appBytes + ss.dataBytes}(ss.cacheBytes)"
+        snapshot["os:fs"] = "${statFs.totalBytes}/${statFs.freeBytes}/${ss.appBytes + ss.dataBytes}(${ss.cacheBytes})"
         //
         snapshot["os:elapsed"] = "${SystemClock.elapsedRealtime()}"
         //
@@ -55,7 +57,11 @@ internal class FinalSnapshots(private val context: Context) : Snapshots {
         //
         val ei = am.getHistoricalProcessExitReasons(context.packageName, 0, 8).maxByOrNull { it.timestamp }
         if (ei != null) {
-            snapshot["app:exits"] = "${ei.timestamp}/${ei.reason}/${ei.status}"
+            val exits = "${ei.timestamp}/${ei.reason}/${ei.status}"
+            if (lastExits != exits) {
+                lastExits = exits
+                snapshot["app:exits"] = exits
+            }
         }
         //
         val pi = context.packageManager.getPackageInfo(context.packageName, 0)
