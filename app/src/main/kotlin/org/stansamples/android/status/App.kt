@@ -38,6 +38,14 @@ internal class App : Application() {
             loggers = loggers,
             snapshots = snapshots,
         )
+        Thread.setDefaultUncaughtExceptionHandler { _, error: Throwable ->
+            val payload = mutableMapOf<String, String>()
+            payload["error"] = error::class.java.name
+            error.cause?.also {
+                payload["cause"] = it::class.java.name
+            }
+            analytics.report(key = "uncaught exception", payload = payload)
+        }
         _providers = Providers(
             loggers = loggers,
             contexts = contexts,

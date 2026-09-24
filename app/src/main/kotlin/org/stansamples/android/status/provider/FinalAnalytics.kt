@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.CoroutineContext
@@ -31,7 +31,7 @@ internal class FinalAnalytics(
     private val fileFormat = dateFormat(pattern = "yyyyMMddHH", locale = Locale.US, timeZone = TimeZone.getTimeZone("utc"))
 
     private val locks = ReentrantReadWriteLock()
-    private val indices = AtomicInteger(launched.inWholeSeconds.toInt())
+    private val indices = AtomicLong(launched.inWholeMilliseconds)
 
     init {
         var timeStart = System.currentTimeMillis().milliseconds
@@ -75,7 +75,7 @@ internal class FinalAnalytics(
                     val docs = Environment
                         .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                         ?: error("No docs!")
-                    val fileName = "Analytics_${fileFormat.format(date)}_${launched.inWholeSeconds}.jsonl"
+                    val fileName = "Analytics_${fileFormat.format(date)}_${launched.inWholeMilliseconds}.jsonl"
                     val dir = docs
                         .resolve(BuildConfig.APPLICATION_ID)
                         .resolve("Analytics")
