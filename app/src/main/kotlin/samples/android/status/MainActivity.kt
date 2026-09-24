@@ -1,9 +1,14 @@
 package samples.android.status
 
 import android.app.ActivityManager
+import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.os.Bundle
 import android.os.Debug
+import android.os.Environment
+import android.os.Process
+import android.os.StatFs
+import android.os.storage.StorageManager
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
@@ -24,12 +29,25 @@ internal class MainActivity : ComponentActivity() {
         am.getMemoryInfo(ami)
         val dmi = Debug.MemoryInfo()
         Debug.getMemoryInfo(dmi)
+        val statFs = StatFs(Environment.getDataDirectory().path)
+        val ssm = context.getSystemService(StorageStatsManager::class.java)
+        val ss = ssm.queryStatsForPackage(
+            StorageManager.UUID_DEFAULT,
+            context.packageName,
+            Process.myUserHandle(),
+        )
         tv.text = """
             totalMem: ${ami.totalMem} (${ami.totalMem.toDouble().div(1024).div(1024).toLong()}mb)
             availMem: ${ami.availMem} (${ami.availMem.toDouble().div(1024).div(1024).toLong()}mb)
             threshold: ${ami.threshold} (${ami.threshold.toDouble().div(1024).div(1024).toLong()}mb)
-            isLowMemory: ${ami.lowMemory}
             totalPss: ${dmi.totalPss * 1024L} (${dmi.totalPss.toDouble().div(1024).toLong()}mb)
+            isLowMemory: ${ami.lowMemory}
+            ---
+            totalBytes: ${statFs.totalBytes} (${statFs.totalBytes.toDouble().div(1024).div(1024).toLong()}mb)
+            freeBytes: ${statFs.freeBytes} (${statFs.freeBytes.toDouble().div(1024).div(1024).toLong()}mb)
+            appBytes: ${ss.appBytes} (${ss.appBytes.toDouble().div(1024).div(1024).toLong()}mb)
+            dataBytes: ${ss.dataBytes} (${ss.dataBytes.toDouble().div(1024).div(1024).toLong()}mb)
+            cacheBytes: ${ss.cacheBytes} (${ss.cacheBytes.toDouble().div(1024).div(1024).toLong()}mb)
         """.trimIndent()
     }
 
