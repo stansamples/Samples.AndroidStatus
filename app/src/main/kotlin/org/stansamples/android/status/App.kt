@@ -2,6 +2,9 @@ package org.stansamples.android.status
 
 import android.app.Application
 import android.content.Context
+import android.os.Environment
+import android.util.AtomicFile
+import androidx.core.util.writeText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,13 +42,24 @@ internal class App : Application() {
             loggers = loggers,
             snapshots = snapshots,
         )
-        Thread.setDefaultUncaughtExceptionHandler { _, error: Throwable ->
-            val payload = mutableMapOf<String, String>()
-            payload["error"] = error::class.java.name
-            error.cause?.also {
-                payload["cause"] = it::class.java.name
+        val handler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error: Throwable ->
+            val text = """
+                timestamp: ${System.currentTimeMillis()}
+                error: ${error::class.java.name}
+                cause: ${error.cause?.let {it::class.java.name}}
+            """.trimIndent()
+            try {
+                Environment
+                    .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                    .resolve(BuildConfig.APPLICATION_ID)
+                    .resolve("uncaught_exception.txt")
+                    .let(::AtomicFile)
+                    .writeText(text)
+            } catch (_: Throwable) {
+                // noop
             }
-            analytics.report(key = "uncaught exception", payload = payload)
+            handler?.uncaughtException(thread, error)
         }
         _providers = Providers(
             loggers = loggers,
