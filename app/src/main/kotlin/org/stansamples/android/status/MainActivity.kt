@@ -153,6 +153,7 @@ internal class MainActivity : ComponentActivity() {
                     view.text = "update status"
                     view.setOnClickListener { _ ->
                         updateStatus(context = context, tv = tv)
+                        providers.analytics.report(key = "update status", payload = emptyMap())
                     }
                     root.addView(view)
                 }

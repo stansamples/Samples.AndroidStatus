@@ -1,0 +1,81 @@
+package org.stansamples.android.status.provider
+
+import android.os.Environment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import org.stansamples.android.status.BuildConfig
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.withLock
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
+
+internal class FinalAnalytics(
+    private val coroutineScope: CoroutineScope,
+    private val default: CoroutineContext,
+    loggers: Loggers,
+) : Analytics {
+    private val logger = loggers.create("[Analytics]")
+    private val launched = System.currentTimeMillis().milliseconds
+    private val dirFormat = dateFormat(pattern = "yyyyMMdd", locale = Locale.US, timeZone = TimeZone.getTimeZone("utc"))
+    private val fileFormat = dateFormat(pattern = "yyyyMMddHH", locale = Locale.US, timeZone = TimeZone.getTimeZone("utc"))
+
+    private val locks = ReentrantReadWriteLock()
+    private val indices = AtomicInteger(launched.inWholeSeconds.toInt())
+
+    private fun toJSONObject(date: Date, key: String, payload: Map<String, String>): JSONObject {
+        val obj = JSONObject()
+        obj.put("id", indices.incrementAndGet())
+        obj.put("timestamp", date.time)
+        obj.put("key", key)
+        if (payload.isNotEmpty()) {
+            val entries = JSONObject()
+            payload.forEach { (key, value) ->
+                entries.put(key, value)
+            }
+            obj.put("payload", entries)
+        }
+        return obj
+    }
+
+    override fun report(key: String, payload: Map<String, String>) {
+        coroutineScope.launch {
+            withContext(default) {
+                locks.writeLock().withLock {
+                    logger.debug("event: $key")
+                    val date = Date()
+                    val docs = Environment
+                        .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                        ?: error("No docs!")
+                    val fileName = "Analytics_${fileFormat.format(date)}_${launched.inWholeSeconds}.jsonl"
+                    val dir = docs
+                        .resolve(BuildConfig.APPLICATION_ID)
+                        .resolve("Analytics")
+                        .resolve(dirFormat.format(date))
+                    dir.mkdirs()
+                    val file = dir.resolve(fileName)
+                    logger.debug("file: ${file.absolutePath}")
+                    val text = StringBuilder()
+                    if (file.exists()) text.append("\n")
+                    text.append(toJSONObject(date = date, key = key, payload = payload).toString())
+                    file.appendText(text.toString())
+                }
+            }
+        }
+    }
+
+    companion object {
+        private fun dateFormat(pattern: String, locale: Locale = Locale.getDefault(), timeZone: TimeZone = TimeZone.getDefault()): DateFormat {
+            val dateFormat = SimpleDateFormat(pattern, locale)
+            dateFormat.timeZone = timeZone
+            return dateFormat
+        }
+    }
+}
