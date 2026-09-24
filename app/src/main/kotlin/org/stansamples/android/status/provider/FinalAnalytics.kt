@@ -9,8 +9,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import org.stansamples.android.status.BuildConfig
 import java.text.DateFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.time.Instant
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -82,8 +82,8 @@ internal class FinalAnalytics(
                         if (!file.exists()) continue
                         if (!file.isDirectory) continue
                         val then = try {
-                            fileFormat.parse(file.name)
-                        } catch (_: Throwable) {
+                            dirFormat.parse(file.name)
+                        } catch (_: ParseException) {
                             continue
                         }.time.milliseconds
                         if (date.time.milliseconds.minus(then) > 14.days) {
