@@ -8,6 +8,7 @@ import android.os.Debug
 import android.os.Environment
 import android.os.Process
 import android.os.StatFs
+import android.os.SystemClock
 import android.os.storage.StorageManager
 import android.view.Gravity
 import android.view.ViewGroup
@@ -18,6 +19,8 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class MainActivity : ComponentActivity() {
     private val providers = App.providers
@@ -36,6 +39,9 @@ internal class MainActivity : ComponentActivity() {
             context.packageName,
             Process.myUserHandle(),
         )
+        val elapsed = SystemClock.elapsedRealtime().milliseconds
+        val now = System.currentTimeMillis().milliseconds
+        val pi = packageManager.getPackageInfo(context.packageName, 0)
         tv.text = """
             totalMem: ${ami.totalMem} (${ami.totalMem.toDouble().div(1024).div(1024).toLong()}mb)
             availMem: ${ami.availMem} (${ami.availMem.toDouble().div(1024).div(1024).toLong()}mb)
@@ -48,6 +54,11 @@ internal class MainActivity : ComponentActivity() {
             appBytes: ${ss.appBytes} (${ss.appBytes.toDouble().div(1024).div(1024).toLong()}mb)
             dataBytes: ${ss.dataBytes} (${ss.dataBytes.toDouble().div(1024).div(1024).toLong()}mb)
             cacheBytes: ${ss.cacheBytes} (${ss.cacheBytes.toDouble().div(1024).div(1024).toLong()}mb)
+            ---
+            elapsed: ${elapsed.inWholeMilliseconds}ms
+            booted: ${now.minus(elapsed).inWholeMilliseconds} (${Date(now.minus(elapsed).inWholeMilliseconds)})
+            installed: ${pi.firstInstallTime} (${Date(pi.firstInstallTime)})
+            updated: ${pi.lastUpdateTime} (${Date(pi.lastUpdateTime)})
         """.trimIndent()
     }
 
