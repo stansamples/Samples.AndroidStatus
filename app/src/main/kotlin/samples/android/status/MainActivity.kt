@@ -14,12 +14,13 @@ import android.os.Process
 import android.os.StatFs
 import android.os.SystemClock
 import android.os.storage.StorageManager
-import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -116,24 +117,32 @@ internal class MainActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
             )
             root.orientation = LinearLayout.VERTICAL
-            root.gravity = Gravity.CENTER_VERTICAL
-            val statusText = TextView(context).also { view ->
-                view.layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-                root.addView(view)
-            }
-            Button(context).also { view ->
-                view.layoutParams = ViewGroup.LayoutParams(
+            root.updatePadding(top = 300, bottom = 128)
+            ScrollView(context).also { sv ->
+                sv.layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0,
+                    1f,
                 )
-                view.text = "update status"
-                view.setOnClickListener { _ ->
-                    updateStatus(context = context, statusText)
+                val tv = TextView(context).also { view ->
+                    view.layoutParams = LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    )
+                    sv.addView(view)
                 }
-                root.addView(view)
+                root.addView(sv)
+                Button(context).also { view ->
+                    view.layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    )
+                    view.text = "update status"
+                    view.setOnClickListener { _ ->
+                        updateStatus(context = context, tv = tv)
+                    }
+                    root.addView(view)
+                }
             }
             Button(context).also { view ->
                 view.layoutParams = ViewGroup.LayoutParams(
