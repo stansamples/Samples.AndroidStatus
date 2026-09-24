@@ -3,6 +3,7 @@ package samples.android.status
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Bundle
+import android.os.Debug
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
@@ -19,14 +20,16 @@ internal class MainActivity : ComponentActivity() {
 
     private fun updateStatus(context: Context, tv: TextView) {
         val am = context.getSystemService(ActivityManager::class.java)
-        val info = ActivityManager.MemoryInfo()
-        am.getMemoryInfo(info)
+        val ami = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(ami)
+        val dmi = Debug.MemoryInfo()
+        Debug.getMemoryInfo(dmi)
         tv.text = """
-            totalMem: ${info.totalMem} (${info.totalMem.toDouble().div(1_000_000).toLong()}mb)
-            availMem: ${info.availMem} (${info.availMem.toDouble().div(1_000_000).toLong()}mb)
-            occupied: ${info.totalMem - info.availMem} (${info.totalMem.toDouble().minus(info.availMem).div(1_000_000).toLong()}mb)
-            threshold: ${info.threshold} (${info.threshold.toDouble().div(1_000_000).toLong()}mb)
-            isLowMemory: ${info.lowMemory}
+            totalMem: ${ami.totalMem} (${ami.totalMem.toDouble().div(1024).div(1024).toLong()}mb)
+            availMem: ${ami.availMem} (${ami.availMem.toDouble().div(1024).div(1024).toLong()}mb)
+            threshold: ${ami.threshold} (${ami.threshold.toDouble().div(1024).div(1024).toLong()}mb)
+            isLowMemory: ${ami.lowMemory}
+            totalPss: ${dmi.totalPss * 1024L} (${dmi.totalPss.toDouble().div(1024).toLong()}mb)
         """.trimIndent()
     }
 
@@ -55,6 +58,17 @@ internal class MainActivity : ComponentActivity() {
                 view.text = "update status"
                 view.setOnClickListener { _ ->
                     updateStatus(context = context, statusText)
+                }
+                root.addView(view)
+            }
+            Button(context).also { view ->
+                view.layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+                view.text = "gc"
+                view.setOnClickListener { _ ->
+                    System.gc()
                 }
                 root.addView(view)
             }
