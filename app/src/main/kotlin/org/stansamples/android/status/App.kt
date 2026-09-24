@@ -11,8 +11,10 @@ import org.stansamples.android.status.provider.Contexts
 import org.stansamples.android.status.provider.FinalAdmins
 import org.stansamples.android.status.provider.FinalAnalytics
 import org.stansamples.android.status.provider.FinalLoggers
+import org.stansamples.android.status.provider.FinalSnapshots
 import org.stansamples.android.status.provider.Loggers
 import org.stansamples.android.status.provider.Providers
+import org.stansamples.android.status.provider.Snapshots
 
 internal class App : Application() {
     override fun onCreate() {
@@ -29,10 +31,12 @@ internal class App : Application() {
         )
         val job = SupervisorJob()
         val coroutineScope = CoroutineScope(contexts.main + job)
+        val snapshots: Snapshots = FinalSnapshots(context = context)
         val analytics: Analytics = FinalAnalytics(
             coroutineScope = coroutineScope,
             default = contexts.default,
             loggers = loggers,
+            snapshots = snapshots,
         )
         _providers = Providers(
             loggers = loggers,

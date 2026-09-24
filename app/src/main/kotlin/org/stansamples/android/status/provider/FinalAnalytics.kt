@@ -2,6 +2,7 @@ package org.stansamples.android.status.provider
 
 import android.os.Environment
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -16,10 +17,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 internal class FinalAnalytics(
     private val coroutineScope: CoroutineScope,
     private val default: CoroutineContext,
+    private val snapshots: Snapshots,
     loggers: Loggers,
 ) : Analytics {
     private val logger = loggers.create("[Analytics]")
@@ -29,6 +32,24 @@ internal class FinalAnalytics(
 
     private val locks = ReentrantReadWriteLock()
     private val indices = AtomicInteger(launched.inWholeSeconds.toInt())
+
+    init {
+        var timeStart = System.currentTimeMillis().milliseconds
+        val timeMax = 16.seconds
+        coroutineScope.launch {
+            withContext(default) {
+                while (true) {
+                    val timeNow = System.currentTimeMillis().milliseconds
+                    if (timeNow.minus(timeStart) < timeMax) {
+                        delay(1.seconds)
+                        continue
+                    }
+                    report(key = "periodic status", payload = snapshots.getSnapshot())
+                    timeStart = System.currentTimeMillis().milliseconds
+                }
+            }
+        }
+    }
 
     private fun toJSONObject(date: Date, key: String, payload: Map<String, String>): JSONObject {
         val obj = JSONObject()
